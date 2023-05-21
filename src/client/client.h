@@ -3,7 +3,7 @@
 #include <stdint.h>
 #include "../utils/dns_message.c"
 #include "../utils/socket.c"
-#include "../utils/utils.h"
+#include "../utils/utils.c"
 #include <arpa/inet.h>
 #include <getopt.h>
 #include <stdlib.h>

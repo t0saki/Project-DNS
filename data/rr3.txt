@@ -1,0 +1,2 @@
+edu.cn. IN NS ns4.servers.com.
+ns4.servers.com. IN A 127.4.4.1

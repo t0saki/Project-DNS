@@ -7,4 +7,12 @@
 #include <unistd.h>
 // #include "dns_message.h"
 
-void udp_send(int sockfd, struct sockaddr_in *addr, char *buf, int len);
+int udp_send(char *server_address, char *domain, uint16_t port,
+             uint16_t query_type);
+
+void udp_recv(int sockfd, int *response_len, uint8_t *response_buffer);
+
+int tcp_send(char *server_address, char *domain, uint16_t port,
+             uint16_t query_type);
+
+void tcp_recv(int sockfd, int *response_len, uint8_t *response_buffer);

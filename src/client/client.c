@@ -51,10 +51,27 @@ int main(int argc, char *argv[]) {
     udp_recv(sockfd, &response_len, response_buffer);
 
     // Parse DNS response
-    parse_dns_message(response_buffer, response_len);
+    dns_rr response[128] = {0};
+    int response_count;
+
+    parse_dns_message(response_buffer, response_len, (dns_rr *)&response, &response_count);
+
+    printf("IP addresses:\n");
+    char* ns_ips[128] = {0};
+    int ns_count = 0;
+    solve_answers(domain, response, response_count, ns_ips, &ns_count);
+    for (int i = 0; i < ns_count; i++) {
+        printf("%s\n", ns_ips[i]);
+    }
 
     // Close the socket
     close(sockfd);
+
+    // Write log
+    create_log_file_client();
+    char *msg = (char *)malloc(100);
+    sprintf(msg, "Sent DNS query to %s:%d, received answer: %s\n", server_address, port, ns_ips[0]);
+    write_log(msg);
 
     return 0;
 }

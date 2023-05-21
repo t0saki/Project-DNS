@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "utils.h"
+#include "utils.c"
 
 #define DNS_TYPE_A 1
 #define DNS_TYPE_CNAME 5
@@ -57,14 +57,15 @@ typedef struct dns_query {
     dns_rr *additional;
 } dns_query;
 
-char *labels_to_domain(const uint8_t *labels, int len);
-
-char *domain_to_labels(const char *domain);
-
 void pack_dns_message(const char *domain, uint16_t type, uint16_t classt,
                       uint8_t *buffer, int *len);
 
-void unpack_dns_answer(const uint8_t *buffer, int offset, int len, int ancount);
+// Function to parse DNS message
+void parse_dns_message(const uint8_t *buffer, int len, dns_rr *answers,
+                       int *answers_count);
 
-void parse_dns_message(const uint8_t *buffer, int len);
+void unpack_dns_answer(const uint8_t *buffer, int offset, int len, int ancount,
+                       dns_rr *answers, int *answers_count);
 
+void solve_answers(char *domain, dns_rr *answers, int answers_count,
+                   char **ns_ips, int *ns_ips_count);

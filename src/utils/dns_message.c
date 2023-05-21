@@ -24,11 +24,12 @@ void pack_dns_message(const char *domain, uint16_t type, uint16_t classt,
     memcpy(buffer + offset, &qclass, sizeof(qclass));
     offset += sizeof(qclass);
     *len = offset;
-    free(labels);
+    // free(labels);
 }
 
 // Function to parse DNS message
-void parse_dns_message(const uint8_t *buffer, int len) {
+void parse_dns_message(const uint8_t *buffer, int len, dns_rr *answers,
+                       int *answers_count) {
     // Parse DNS header
     dns_header header = {0};
     memcpy(&header, buffer, sizeof(header));
@@ -60,18 +61,21 @@ void parse_dns_message(const uint8_t *buffer, int len) {
     qclass = ntohs(qclass);
     printf("QCLASS: %d\n", qclass);
     offset += sizeof(qclass);
-    free(domain);
+    // free(domain);
     printf("\n");
 
     // Parse DNS answer
     if (header.ancount > 0) {
         printf("Answers:\n");
-        unpack_dns_answer(buffer, offset, len, header.ancount);
+        unpack_dns_answer(buffer, offset, len, header.ancount, answers,
+                          answers_count);
     }
 }
 
-void unpack_dns_answer(const uint8_t *buffer, int offset, int len,
-                       int ancount) {
+void unpack_dns_answer(const uint8_t *buffer, int offset, int len, int ancount,
+                       dns_rr *answers, int *answers_count) {
+    *answers_count = ancount;
+
     // Iterate over each answer
     for (int i = 0; i < ancount; i++) {
         // Parse DNS answer
@@ -114,6 +118,7 @@ void unpack_dns_answer(const uint8_t *buffer, int offset, int len,
         offset += sizeof(answer.rdlength);
 
         // Parse rdata field
+        answer.rdata = (char *)malloc(answer.rdlength + 1);
         if (answer.type == DNS_TYPE_A) {
             // Parse IPv4 address
             char ipv4[32];
@@ -122,11 +127,11 @@ void unpack_dns_answer(const uint8_t *buffer, int offset, int len,
             // asprintf((char**)&ipv4, "%d.%d.%d.%d", buffer[offset],
             // buffer[offset + 1],
             //          buffer[offset + 2], buffer[offset + 3]);
-            answer.rdata = ipv4;
+            strcpy(answer.rdata, ipv4);
         } else if (answer.type == DNS_TYPE_CNAME) {
             // Parse CNAME
             char *cname = labels_to_domain(buffer + offset, len - offset);
-            answer.rdata = cname;
+            strcpy(answer.rdata, cname);
         } else if (answer.type == DNS_TYPE_MX) {
             // Parse MX
             uint16_t preference;
@@ -135,7 +140,7 @@ void unpack_dns_answer(const uint8_t *buffer, int offset, int len,
             char *mx = labels_to_domain(buffer + offset + 2, len - offset - 2);
             char *mx_record;
             sprintf(mx_record, "%d %s", preference, mx);
-            answer.rdata = mx_record;
+            strcpy(answer.rdata, mx_record);
         } else {
             // Parse unknown type
             answer.rdata = (char *)malloc(answer.rdlength + 1);
@@ -143,6 +148,9 @@ void unpack_dns_answer(const uint8_t *buffer, int offset, int len,
             answer.rdata[answer.rdlength] = '\0';
         }
         offset += answer.rdlength;
+
+        // Add answer to the list
+        answers[i] = answer;
 
         // Print the parsed answer
         printf("    Answer %d:\n", i + 1);
@@ -155,5 +163,31 @@ void unpack_dns_answer(const uint8_t *buffer, int offset, int len,
 
         // Move to the next answer
         printf("\n");
+    }
+}
+
+void solve_answers(char *domain, dns_rr *answers, int answers_count,
+                   char **ns_ips, int *ns_ips_count) {
+    // Iterate over each answer
+    for (int i = 0; i < answers_count; i++) {
+        // Parse DNS answer
+        dns_rr answer = answers[i];
+
+        if (answer.type == DNS_TYPE_A) {
+            if (strcmp(answer.name, domain) == 0) {
+                ns_ips[*ns_ips_count] =
+                    (char *)malloc(strlen(answer.rdata) + 1);
+                strcpy(ns_ips[*ns_ips_count], answer.rdata);
+                printf("    NS IP: %s\n", answer.rdata);
+                (*ns_ips_count)++;
+            }
+        } else if (answer.type == DNS_TYPE_CNAME) {
+            char *cname = answer.rdata;
+            strcpy(domain, cname);
+        } else if (answer.type == DNS_TYPE_MX) {
+            char *mx = answer.rdata;
+            char *mx_domain = mx + 2;
+            strcpy(domain, mx_domain);
+        }
     }
 }
