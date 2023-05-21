@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "utils.h"
 
 #define DNS_TYPE_A 1
 #define DNS_TYPE_CNAME 5

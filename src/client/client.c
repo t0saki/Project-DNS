@@ -1,13 +1,4 @@
-#include "../utils/dns_message.c"
-#include "../utils/socket.c"
-#include "../utils/utils.h"
-#include <arpa/inet.h>
-#include <getopt.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <sys/socket.h>
-#include <unistd.h>
+#include "client.h"
 
 int main(int argc, char *argv[]) {
     char *server_address = NULL;
@@ -49,6 +40,7 @@ int main(int argc, char *argv[]) {
         exit(EXIT_FAILURE);
     }
 
+    // Send DNS query
     int sockfd = udp_send(server_address, domain, port, query_type);
 
     printf("Sent DNS query to %s:%d\n", server_address, port);
