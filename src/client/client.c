@@ -3,7 +3,7 @@
 int main(int argc, char *argv[]) {
     char *server_address = NULL;
     char *domain = NULL;
-    uint16_t port = 53;
+    uint16_t port = DNS_PORT;
     uint16_t query_type = 0;
 
     // Parse command line arguments

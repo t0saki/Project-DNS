@@ -2,6 +2,7 @@
 #include "utils.h"
 
 char *log_file = NULL;
+FILE *log_fp = NULL;
 
 char *strtrim(char *str) {
     size_t len = strlen(str);
@@ -74,8 +75,8 @@ void create_log_file() {
                 local->tm_year + 1900, local->tm_mon + 1, local->tm_mday,
                 local->tm_hour, local->tm_min, local->tm_sec);
 
-        FILE *fp = fopen(log_file, "w");
-        fclose(fp);
+        log_fp = fopen(log_file, "w");
+        fclose(log_fp);
 
         char cwd[1024];
         getcwd(cwd, sizeof(cwd));
@@ -99,8 +100,8 @@ void create_log_file_client() {
                 local->tm_year + 1900, local->tm_mon + 1, local->tm_mday,
                 local->tm_hour, local->tm_min, local->tm_sec);
 
-        FILE *fp = fopen(log_file, "w");
-        fclose(fp);
+        log_fp = fopen(log_file, "w");
+        fclose(log_fp);
 
         char cwd[1024];
         getcwd(cwd, sizeof(cwd));
@@ -115,7 +116,26 @@ void create_log_file_client() {
 }
 
 void write_log(char *log) {
-    FILE *fp = fopen(log_file, "a");
-    fprintf(fp, "%s\n", log);
-    fclose(fp);
+    if (log_file == NULL) {
+        create_log_file();
+    }
+    log_fp = fopen(log_file, "a");
+    time_t now;
+    time(&now);
+    struct tm *local = localtime(&now);
+    fprintf(log_fp, "%.4d-%.2d-%.2d %.2d:%.2d:%.2d %s\n",
+            local->tm_year + 1900, local->tm_mon + 1, local->tm_mday,
+            local->tm_hour, local->tm_min, local->tm_sec, log);
+    fclose(log_fp);
+}
+
+void close_log_file() {
+    if (log_file != NULL) {
+        free(log_file);
+        log_file = NULL;
+    }
+    if (log_fp != NULL) {
+        fclose(log_fp);
+        log_fp = NULL;
+    }
 }

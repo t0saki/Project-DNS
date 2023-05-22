@@ -6,12 +6,15 @@
 #include <string.h>
 #include "utils.c"
 
+#define DNS_PORT 53333
 #define DNS_TYPE_A 1
 #define DNS_TYPE_CNAME 5
 #define DNS_TYPE_MX 15
 #define DNS_MAX_MESSAGE_SIZE 512
-#define DNS_RESPONSE 1
-#define DNS_QUERY 0
+#define DNS_RESPONSE 33152
+// 0x0100
+#define DNS_QUERY 256
+
 #define DNS_CLASS_IN 1
 
 typedef struct dns_message {
