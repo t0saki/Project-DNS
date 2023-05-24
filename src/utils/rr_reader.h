@@ -5,3 +5,9 @@
 #include <string.h>
 #include "dns_message.c"
 #include "utils.c"
+
+char *read_line(FILE *file);
+
+dns_rr *read_rr(FILE *file);
+
+dns_rr **read_rr_all(char *filename, int *countr);

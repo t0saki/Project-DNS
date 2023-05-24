@@ -18,6 +18,7 @@ int main(int argc, char *argv[]) {
             break;
         case 'p':
             port = atoi(strtrim(optarg));
+            DNS_PORT = port;
             break;
         case 't':
             if (strcmp(strtrim(optarg), "a") == 0) {
@@ -53,8 +54,9 @@ int main(int argc, char *argv[]) {
     // Parse DNS response
     dns_rr response[128] = {0};
     int response_count;
+    dns_question question;
 
-    parse_dns_message(response_buffer, response_len, (dns_rr *)&response, &response_count);
+    parse_dns_message(response_buffer, response_len, (dns_rr *)&response, &response_count, &question);
 
     printf("IP addresses:\n");
     char* ns_ips[128] = {0};

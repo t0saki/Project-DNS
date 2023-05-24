@@ -3,6 +3,7 @@
 
 char *log_file = NULL;
 FILE *log_fp = NULL;
+pthread_mutex_t log_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 char *strtrim(char *str) {
     size_t len = strlen(str);
@@ -65,13 +66,19 @@ char *domain_to_labels(const char *domain) {
     return labels;
 }
 
-void create_log_file() {
+void create_log_file(char *type) {
     if (log_file == NULL) {
+        // Check folder logs exists
+        struct stat st = {0};
+        if (stat("logs", &st) == -1) {
+            mkdir("logs", 0700);
+        }
+
         log_file = (char *)malloc(128);
         time_t now;
         time(&now);
         struct tm *local = localtime(&now);
-        sprintf(log_file, "logs/dns_svr_%.4d%.2d%.2d%.2d%.2d%.2d.log",
+        sprintf(log_file, "logs/dns_%s_%.4d%.2d%.2d%.2d%.2d%.2d.log", type,
                 local->tm_year + 1900, local->tm_mon + 1, local->tm_mday,
                 local->tm_hour, local->tm_min, local->tm_sec);
 
@@ -90,43 +97,33 @@ void create_log_file() {
     }
 }
 
-void create_log_file_client() {
-    if (log_file == NULL) {
-        log_file = (char *)malloc(128);
-        time_t now;
-        time(&now);
-        struct tm *local = localtime(&now);
-        sprintf(log_file, "logs/dns_client_%.4d%.2d%.2d%.2d%.2d%.2d.log",
-                local->tm_year + 1900, local->tm_mon + 1, local->tm_mday,
-                local->tm_hour, local->tm_min, local->tm_sec);
+void create_log_file_server() { create_log_file("server"); }
 
-        log_fp = fopen(log_file, "w");
-        fclose(log_fp);
-
-        char cwd[1024];
-        getcwd(cwd, sizeof(cwd));
-        printf("Log file created: %s/%s\n", cwd, log_file);
-
-        char *log = (char *)malloc(128);
-        sprintf(log, "Log file created: %s/%s", cwd, log_file);
-        write_log(log);
-
-        free(log);
-    }
-}
+void create_log_file_client() { create_log_file("client"); }
 
 void write_log(char *log) {
+    // Lock mutex
+    while (pthread_mutex_lock(&log_mutex) != 0) {
+        // printf("Error locking mutex\n");
+    }
+
     if (log_file == NULL) {
-        create_log_file();
+        printf("Log file not created\n");
+        return;
     }
     log_fp = fopen(log_file, "a");
     time_t now;
     time(&now);
     struct tm *local = localtime(&now);
-    fprintf(log_fp, "%.4d-%.2d-%.2d %.2d:%.2d:%.2d %s\n",
-            local->tm_year + 1900, local->tm_mon + 1, local->tm_mday,
-            local->tm_hour, local->tm_min, local->tm_sec, log);
+    fprintf(log_fp, "%.4d-%.2d-%.2d %.2d:%.2d:%.2d %s\n", local->tm_year + 1900,
+            local->tm_mon + 1, local->tm_mday, local->tm_hour, local->tm_min,
+            local->tm_sec, log);
     fclose(log_fp);
+
+    // Unlock mutex
+    if (pthread_mutex_unlock(&log_mutex) != 0) {
+        printf("Error unlocking mutex\n");
+    }
 }
 
 void close_log_file() {

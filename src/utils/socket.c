@@ -1,3 +1,4 @@
+#pragma once
 #include "socket.h"
 
 int udp_send(char *server_address, char *domain, uint16_t port,

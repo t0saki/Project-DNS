@@ -1,10 +1,12 @@
 #pragma once
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdint.h>
 #include <string.h>
+#include <sys/stat.h>
 #include <time.h>
 #include <unistd.h>
+#include <pthread.h>
 
 char *strtrim(char *str);
 

@@ -11,7 +11,8 @@
 #include "../utils/dns_message.c"
 #include "../utils/socket.c"
 #include "../utils/utils.c"
+#include "../utils/rr_reader.c"
 
-void *start_server(void *args);
+void *root_server(void *args);
 
-void *server(void *args);
+void *tier_server(void *args);

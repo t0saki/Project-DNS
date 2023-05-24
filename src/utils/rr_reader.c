@@ -1,3 +1,4 @@
+#pragma once
 #include "rr_reader.h"
 
 /*
@@ -18,7 +19,7 @@ char *read_line(FILE *file) {
 }
 
 // Read a resource record from the file
-rr *read_rr(FILE *file) {
+dns_rr *read_rr(FILE *file) {
     char *line = read_line(file);
     if (line == NULL) {
         return NULL;
@@ -26,7 +27,7 @@ rr *read_rr(FILE *file) {
 
     // Parse the line
     char *token = strtok(line, " ");
-    rr *record = (rr *)malloc(sizeof(rr));
+    dns_rr *record = (dns_rr *)malloc(sizeof(dns_rr));
     record->name = (char *)malloc(strlen(token) + 1);
     strcpy(record->name, token);
 
@@ -44,7 +45,7 @@ rr *read_rr(FILE *file) {
 }
 
 // Read all resource records from the file
-rr **read_rr_all(char *filename) {
+dns_rr **read_rr_all(char *filename, int *countr) {
     FILE *file = fopen(filename, "r");
     if (file == NULL) {
         return NULL;
@@ -61,12 +62,34 @@ rr **read_rr_all(char *filename) {
     free(line);
 
     // Read all resource records
-    rr **records = (rr **)malloc(sizeof(rr *) * count);
+    dns_rr **records = (dns_rr **)malloc(sizeof(dns_rr *) * count);
     rewind(file);
     for (int i = 0; i < count; i++) {
         records[i] = read_rr(file);
     }
 
     fclose(file);
+    *countr = count;
     return records;
+}
+
+dns_rr *find_rr(dns_rr ** records, int countr, char *name, int type) {
+    for (int i = 0; i < countr; i++) {
+        if (strcmp(records[i]->name, name) == 0 && records[i]->type == type) {
+            return records[i];
+        }
+    }
+    // else find best match
+    int best_match = 0;
+    int best_match_index = -1;
+    for (int i = 0; i < countr; i++) {
+        if (strcmp(records[i]->name, name) > best_match) {
+            best_match = strcmp(records[i]->name, name);
+            best_match_index = i;
+        }
+    }
+    if (best_match_index == -1) {
+        return NULL;
+    }
+    return records[best_match_index];
 }
