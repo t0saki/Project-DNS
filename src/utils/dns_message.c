@@ -34,15 +34,18 @@ void pack_dns_response(const dns_question *question, const dns_rr *answer,
     memset(response_buffer, 0, DNS_MAX_MESSAGE_SIZE);
     dns_header header = {0};
     header.id = htons(0x1234);
-    header.flags = htons(DNS_RESPONSE | DNS_RECURSION_DESIRED);
+    header.flags = htons(DNS_RESPONSE);
     header.qdcount = htons(1);
     header.ancount = htons(1);
     memcpy(response_buffer, &header, sizeof(header));
 
     // Pack DNS question
+    // Qname to labels
     int offset = sizeof(header);
-    memcpy(response_buffer + offset, question->qname, question->qname_len + 2);
-    offset += question->qname_len + 2;
+    char *labels = domain_to_labels(question->qname);
+    int domain_len = strlen(question->qname);
+    memcpy(response_buffer + offset, labels, domain_len + 2);
+    offset += domain_len + 2;
     uint16_t qtype = htons(question->qtype);
     memcpy(response_buffer + offset, &qtype, sizeof(qtype));
     offset += sizeof(qtype);
@@ -51,8 +54,11 @@ void pack_dns_response(const dns_question *question, const dns_rr *answer,
     offset += sizeof(qclass);
 
     // Pack DNS answer
-    memcpy(response_buffer + offset, answer->name, strlen(answer->name));
-    offset += strlen(answer->name) + 1;
+    // to labels
+    char *labels1 = domain_to_labels(answer->name);
+    int domain_len1 = strlen(answer->name);
+    memcpy(response_buffer + offset, labels1, domain_len1 + 1);
+    offset += domain_len1 + 2;
     uint16_t type = htons(answer->type);
     memcpy(response_buffer + offset, &type, sizeof(type));
     offset += sizeof(type);
@@ -67,11 +73,11 @@ void pack_dns_response(const dns_question *question, const dns_rr *answer,
     offset += sizeof(rdlength);
     // if type a, encode ip address
     if (answer->type == DNS_TYPE_A) {
-        char* ip = answer->rdata;
-        char* ip1 = strtok(ip, ".");
-        char* ip2 = strtok(NULL, ".");
-        char* ip3 = strtok(NULL, ".");
-        char* ip4 = strtok(NULL, ".");
+        char *ip = answer->rdata;
+        char *ip1 = strtok(ip, ".");
+        char *ip2 = strtok(NULL, ".");
+        char *ip3 = strtok(NULL, ".");
+        char *ip4 = strtok(NULL, ".");
         uint8_t ip1_int = atoi(ip1);
         uint8_t ip2_int = atoi(ip2);
         uint8_t ip3_int = atoi(ip3);
@@ -85,8 +91,12 @@ void pack_dns_response(const dns_question *question, const dns_rr *answer,
         memcpy(response_buffer + offset, &ip4_int, sizeof(ip4_int));
         offset += sizeof(ip4_int);
     } else {
-        memcpy(response_buffer + offset, answer->rdata, answer->rdlength);
-        offset += answer->rdlength;
+        // to label
+
+        char *labels = domain_to_labels(answer->rdata);
+        int domain_len = strlen(answer->rdata);
+        memcpy(response_buffer + offset, labels, domain_len + 1);
+        offset += domain_len + 2;
     }
     *len = offset;
 }
@@ -197,6 +207,11 @@ void unpack_dns_answer(const uint8_t *buffer, int offset, int len, int ancount,
         } else {
             // Parse name field
             name = labels_to_domain(buffer + offset, len - offset);
+            // if (strlen(name) == 0) {
+            //     answer.name = (char *)malloc(2);
+            //     name = ".";
+            //     strcpy(answer.name, ".");
+            // }
             answer.name = name;
             offset += strlen(name) + 2;
         }

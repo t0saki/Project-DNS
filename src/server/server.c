@@ -174,9 +174,9 @@ void *root_server(void *args) {
             // Parse the DNS response
             dns_rr *answers = (dns_rr *)malloc(100 * sizeof(dns_rr));
             int answer_count = 0;
-            dns_question question = {0};
+            dns_question questions = {0};
             parse_dns_message((uint8_t *)buffer_tcp, len_tcp, answers,
-                              &answer_count, &question);
+                              &answer_count, &questions);
 
             // Get the next DNS server address
             if (answer_count > 0) {
@@ -184,12 +184,37 @@ void *root_server(void *args) {
             }
 
             // If totally same as the query, then break
-            answers[0].name[1] = question.qname[0];
-            if (strcmp(dot_name, answers[0].name) == 0) {
+            // answers[0].name[1] = questions.qname[0];
+            if (strcmp(question.qname, answers[0].name) == 0) {
                 printf("RData: %s\n", answers[0].rdata);
                 msg = (char *)malloc(100);
                 sprintf(msg, "Found the IP address: %s\n", answers[0].rdata);
                 write_log(msg);
+
+                // Send the DNS response to the client
+                dns_rr final_answer = {0};
+                final_answer.name = question.qname;
+                final_answer.type = question.qtype;
+                final_answer.classt = DNS_CLASS_IN;
+                final_answer.ttl = 0;
+                final_answer.rdlength = strlen(answers[0].rdata);
+                final_answer.rdata = answers[0].rdata;
+
+                uint8_t dns_buffer[DNS_MAX_MESSAGE_SIZE];
+                memset(dns_buffer, 0, DNS_MAX_MESSAGE_SIZE);
+                int dns_buffer_len = 0;
+                pack_dns_response(&questions, &final_answer, dns_buffer,
+                                  &dns_buffer_len);
+
+                if (sendto(sockfd, dns_buffer, dns_buffer_len, 0,
+                           (struct sockaddr *)&client_addr,
+                           sizeof(client_addr)) < 0) {
+                    write_log("Failed to send DNS response.\n");
+                    exit(EXIT_FAILURE);
+                }
+
+                printf("Sent the DNS response to the client.\n");
+
                 break;
             }
 
@@ -326,6 +351,10 @@ void *tier_server(void *args) {
             rr_response.type = DNS_TYPE_A;
             rr_response.rdata = rrs[ns_a_rr_index]->rdata;
         }
+
+        // Remove ending dot from rr_response.name
+        if (rr_response.name[strlen(rr_response.name) - 1] == '.')
+            rr_response.name[strlen(rr_response.name) - 1] = '\0';
 
         // Create the DNS response
         uint8_t response[1024];
