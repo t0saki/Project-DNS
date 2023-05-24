@@ -136,3 +136,10 @@ void close_log_file() {
         log_fp = NULL;
     }
 }
+
+char* add_dot(char* domain) {
+    char* new_domain = (char*)malloc(1000);
+    strcpy(new_domain, domain);
+    strcat(new_domain, ".");
+    return new_domain;
+}

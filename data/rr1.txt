@@ -1,2 +1,2 @@
 . 86400 IN NS a.root-servers.net.
-a.root-servers.net. 86400 IN A 127.2.2.1
+a.root-servers.net. 86400 IN A 127.3.3.1

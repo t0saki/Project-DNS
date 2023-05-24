@@ -1,6 +1,6 @@
 #include "server.h"
 
-const int MAX_TIER = 1;
+const int MAX_TIER = 6;
 char *ROOT_SERVER = "127.1.1.1";
 char *TIER_SERVERS[] = {"127.2.2.1", "127.3.3.1", "127.4.4.1",
                         "127.5.5.1", "127.6.6.1", "127.7.7.1"};
@@ -110,6 +110,21 @@ void *root_server(void *args) {
         sprintf(msg, "Received DNS query: %s\n", question.qname);
         write_log(msg);
 
+        char *dot_name = add_dot(question.qname);
+
+        // // Add a dot to the end of the domain name
+        // question.qname = add_dot(question.qname);
+
+        // // Pack to new buffer to add a dot
+        // uint8_t dns_buffer[DNS_MAX_MESSAGE_SIZE];
+        // memset(dns_buffer, 0, DNS_MAX_MESSAGE_SIZE);
+        // int dns_buffer_len = 0;
+        // pack_dns_message(question.qname, question.qtype, DNS_CLASS_IN,
+        //                  dns_buffer, &dns_buffer_len);
+
+        // buffer = (char *)malloc(1024);
+        // memcpy(buffer, dns_buffer, dns_buffer_len);
+
         char *next_dns_server_address = TIER_SERVERS[0];
         while (1) {
             // Send the DNS query to the next DNS server with TCP
@@ -134,6 +149,10 @@ void *root_server(void *args) {
                 exit(EXIT_FAILURE);
             }
 
+            // // Add 2 bytes of length to the beginning of the buffer
+            // uint16_t len = htons(len);
+            // memcpy(buffer, &len, 2);
+
             // Send the DNS query
             if (send(sockfd_tcp, buffer, len, 0) < 0) {
                 write_log("Failed to send DNS query.\n");
@@ -148,10 +167,34 @@ void *root_server(void *args) {
                 exit(EXIT_FAILURE);
             }
 
+            // // Delete the first 2 bytes of length
+            // len_tcp -= 2;
+            // memmove(buffer_tcp, buffer_tcp + 2, len_tcp);
+
+            // Parse the DNS response
+            dns_rr *answers = (dns_rr *)malloc(100 * sizeof(dns_rr));
+            int answer_count = 0;
+            dns_question question = {0};
+            parse_dns_message((uint8_t *)buffer_tcp, len_tcp, answers,
+                              &answer_count, &question);
+
+            // Get the next DNS server address
+            if (answer_count > 0) {
+                next_dns_server_address = answers[0].rdata;
+            }
+
+            // If totally same as the query, then break
+            answers[0].name[1] = question.qname[0];
+            if (strcmp(dot_name, answers[0].name) == 0) {
+                printf("RData: %s\n", answers[0].rdata);
+                msg = (char *)malloc(100);
+                sprintf(msg, "Found the IP address: %s\n", answers[0].rdata);
+                write_log(msg);
+                break;
+            }
+
             printf("Next iter\n");
         }
-
-        printf("Received DNS query: %d\n", count);
     }
     // Close the socket
     close(sockfd);
@@ -222,6 +265,10 @@ void *tier_server(void *args) {
             exit(EXIT_FAILURE);
         }
 
+        // // Delete the first 2 bytes of length
+        // len -= 2;
+        // memmove(buffer, buffer + 2, len);
+
         printf("Received DNS query: %d\n", len);
 
         // Parse the DNS query
@@ -231,12 +278,63 @@ void *tier_server(void *args) {
                           (int *)NULL, (dns_question *)&question);
 
         // Find the resource record
-        dns_rr *rr = find_rr(rrs, rr_count, question.qname, question.qtype);
+        // dns_rr *rr = find_rr(rrs, rr_count, add_dot(question.qname),
+        //                      question.qtype);
+
+        char *query_domain = add_dot(question.qname);
+
+        int rr_response_index =
+            find_rr(rrs, rr_count, query_domain, question.qtype);
+
+        dns_rr rr_response = {0};
+
+        // If has full A record or CNAME
+        if (rr_response_index == -1) {
+            rr_response_index =
+                find_rr(rrs, rr_count, query_domain, DNS_TYPE_A);
+            if (rr_response_index != -1)
+                rr_response = *rrs[rr_response_index];
+        }
+
+        if (rr_response_index == -1) {
+            rr_response_index =
+                find_rr(rrs, rr_count, query_domain, DNS_TYPE_CNAME);
+            // If found CNAME
+            if (rr_response_index != -1) {
+                // Find the A record for the CNAME
+                int cname_a_rr_index = find_rr(
+                    rrs, rr_count, rrs[rr_response_index]->rdata, DNS_TYPE_A);
+                rr_response = *rrs[rr_response_index];
+                rr_response.type = DNS_TYPE_A;
+                if (cname_a_rr_index != -1)
+                    rr_response.rdata = rrs[cname_a_rr_index]->rdata;
+            }
+        }
+
+        if (rr_response_index == -1) {
+            // If not found, find the NS record
+            // Find ns first
+            int ns_rr_index = find_rr(rrs, rr_count, query_domain, DNS_TYPE_NS);
+
+            char *ns_domain = rrs[ns_rr_index]->rdata;
+
+            // Find the A record for the NS
+            int ns_a_rr_index = find_rr(rrs, rr_count, ns_domain, DNS_TYPE_A);
+
+            rr_response = *rrs[ns_a_rr_index];
+            rr_response.name = rrs[ns_rr_index]->name;
+            rr_response.type = DNS_TYPE_A;
+            rr_response.rdata = rrs[ns_a_rr_index]->rdata;
+        }
 
         // Create the DNS response
         uint8_t response[1024];
         int response_len = 0;
-        pack_dns_response(&question, rrs[0], response, &response_len);
+        pack_dns_response(&question, &rr_response, response, &response_len);
+
+        // // Add 2 bytes of length to the beginning of the buffer
+        // uint16_t len2 = htons(response_len);
+        // memcpy(buffer, &len2, 2);
 
         // Send the DNS response
         if (send(client_sockfd, (char *)response, response_len, 0) < 0) {

@@ -35,11 +35,36 @@ dns_rr *read_rr(FILE *file) {
     record->ttl = atoi(token);
 
     token = strtok(NULL, " ");
-    record->type = atoi(token);
+    if (strcmp(token, "IN") == 0) {
+        record->classt = DNS_CLASS_IN;
+    }
 
     token = strtok(NULL, " ");
+    if (strcmp(token, "A") == 0) {
+        record->type = DNS_TYPE_A;
+    } else if (strcmp(token, "CNAME") == 0) {
+        record->type = DNS_TYPE_CNAME;
+    } else if (strcmp(token, "MX") == 0) {
+        record->type = DNS_TYPE_MX;
+    } else if (strcmp(token, "NS") == 0) {
+        record->type = DNS_TYPE_NS;
+    } else if (strcmp(token, "SOA") == 0) {
+        record->type = DNS_TYPE_SOA;
+    } else if (strcmp(token, "TXT") == 0) {
+        record->type = DNS_TYPE_TXT;
+    } else if (strcmp(token, "AAAA") == 0) {
+        record->type = DNS_TYPE_AAAA;
+    }
+
+    token = strtok(NULL, " ");
+    record->rdlength = strlen(token);
     record->rdata = (char *)malloc(strlen(token) + 1);
     strcpy(record->rdata, token);
+
+    // Remove \n if it exists
+    if (record->rdata[strlen(record->rdata) - 1] == '\n') {
+        record->rdata[strlen(record->rdata) - 1] = '\0';
+    }
 
     return record;
 }
@@ -73,23 +98,30 @@ dns_rr **read_rr_all(char *filename, int *countr) {
     return records;
 }
 
-dns_rr *find_rr(dns_rr ** records, int countr, char *name, int type) {
+int find_rr(dns_rr ** records, int countr, char *name, int type) {
     for (int i = 0; i < countr; i++) {
         if (strcmp(records[i]->name, name) == 0 && records[i]->type == type) {
-            return records[i];
+            return i;
         }
     }
-    // else find best match
+    // else find best match at the end, such as google.com. and com.
     int best_match = 0;
     int best_match_index = -1;
-    for (int i = 0; i < countr; i++) {
-        if (strcmp(records[i]->name, name) > best_match) {
-            best_match = strcmp(records[i]->name, name);
-            best_match_index = i;
+    size_t name_len = strlen(name);
+    for (int i = name_len - 1; i >= 0; i--) {
+        char *name_part = name + i;
+        for (int j = 0; j < countr; j++) {
+
+            if (strcmp(records[j]->name, name_part) == 0 && records[j]->type == type) {
+                if (i > best_match) {
+                    best_match = name_len - i;
+                    best_match_index = j;
+                }
+            }
         }
     }
-    if (best_match_index == -1) {
-        return NULL;
+    if (best_match_index != -1) {
+        return best_match_index;
     }
-    return records[best_match_index];
+    return -1;
 }

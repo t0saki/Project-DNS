@@ -51,8 +51,8 @@ void pack_dns_response(const dns_question *question, const dns_rr *answer,
     offset += sizeof(qclass);
 
     // Pack DNS answer
-    memcpy(response_buffer + offset, answer->name, strlen(answer->name) + 2);
-    offset += strlen(answer->name) + 2;
+    memcpy(response_buffer + offset, answer->name, strlen(answer->name));
+    offset += strlen(answer->name) + 1;
     uint16_t type = htons(answer->type);
     memcpy(response_buffer + offset, &type, sizeof(type));
     offset += sizeof(type);
@@ -65,8 +65,29 @@ void pack_dns_response(const dns_question *question, const dns_rr *answer,
     uint16_t rdlength = htons(answer->rdlength);
     memcpy(response_buffer + offset, &rdlength, sizeof(rdlength));
     offset += sizeof(rdlength);
-    memcpy(response_buffer + offset, answer->rdata, answer->rdlength);
-    offset += answer->rdlength;
+    // if type a, encode ip address
+    if (answer->type == DNS_TYPE_A) {
+        char* ip = answer->rdata;
+        char* ip1 = strtok(ip, ".");
+        char* ip2 = strtok(NULL, ".");
+        char* ip3 = strtok(NULL, ".");
+        char* ip4 = strtok(NULL, ".");
+        uint8_t ip1_int = atoi(ip1);
+        uint8_t ip2_int = atoi(ip2);
+        uint8_t ip3_int = atoi(ip3);
+        uint8_t ip4_int = atoi(ip4);
+        memcpy(response_buffer + offset, &ip1_int, sizeof(ip1_int));
+        offset += sizeof(ip1_int);
+        memcpy(response_buffer + offset, &ip2_int, sizeof(ip2_int));
+        offset += sizeof(ip2_int);
+        memcpy(response_buffer + offset, &ip3_int, sizeof(ip3_int));
+        offset += sizeof(ip3_int);
+        memcpy(response_buffer + offset, &ip4_int, sizeof(ip4_int));
+        offset += sizeof(ip4_int);
+    } else {
+        memcpy(response_buffer + offset, answer->rdata, answer->rdlength);
+        offset += answer->rdlength;
+    }
     *len = offset;
 }
 
