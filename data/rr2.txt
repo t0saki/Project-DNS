@@ -4,3 +4,7 @@ in-addr.arpa. 86400 IN NS ptr.servers.com.
 ptr.servers.com. 86400 IN A 127.6.6.1
 com. 86400 IN NS ns6.servers.com.
 ns6.servers.com. 86400 IN A 127.7.7.1
+org. 86400 IN NS ns7.servers.com.
+ns7.servers.com. 86400 IN A 127.8.8.1
+us. 86400 IN NS ns8.servers.com.
+ns8.servers.com. 86400 IN A 127.9.9.1

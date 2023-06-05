@@ -1,0 +1,1 @@
+wikipedia.org. 86400 IN A 11.4.8.10
