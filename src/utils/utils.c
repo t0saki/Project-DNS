@@ -143,3 +143,12 @@ char* add_dot(char* domain) {
     strcat(new_domain, ".");
     return new_domain;
 }
+
+char* convert2ptr(char* domain) {
+    // Reverse the IP address and append .in-addr.arpa
+    char* new_domain = (char*)malloc(1000);
+    int ip[4];
+    sscanf(domain, "%d.%d.%d.%d", &ip[0], &ip[1], &ip[2], &ip[3]);
+    sprintf(new_domain, "%d.%d.%d.%d.in-addr.arpa", ip[3], ip[2], ip[1], ip[0]);
+    return new_domain;
+}

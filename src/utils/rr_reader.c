@@ -54,6 +54,8 @@ dns_rr *read_rr(FILE *file) {
         record->type = DNS_TYPE_TXT;
     } else if (strcmp(token, "AAAA") == 0) {
         record->type = DNS_TYPE_AAAA;
+    } else if (strcmp(token, "PTR") == 0) {
+        record->type = DNS_TYPE_PTR;
     }
 
     token = strtok(NULL, " ");

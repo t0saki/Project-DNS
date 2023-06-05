@@ -94,3 +94,17 @@ void tcp_recv(int sockfd, int *response_len, uint8_t *response_buffer) {
         exit(EXIT_FAILURE);
     }
 }
+
+char *udp2tcp(char *udpBuffer, int udpBuffer_len) {
+    char *tcpBuffer = (char *)malloc(udpBuffer_len + 2);
+    tcpBuffer[0] = udpBuffer_len >> 8;
+    tcpBuffer[1] = udpBuffer_len & 0xFF;
+    memcpy(tcpBuffer + 2, udpBuffer, udpBuffer_len);
+    return tcpBuffer;
+}
+
+char *tcp2udp(char *tcpBuffer, int tcpBuffer_len) {
+    char *udpBuffer = (char *)malloc(tcpBuffer_len - 2);
+    memcpy(udpBuffer, tcpBuffer + 2, tcpBuffer_len - 2);
+    return udpBuffer;
+}
