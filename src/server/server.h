@@ -12,6 +12,6 @@
 #include "../utils/socket.c"
 #include "../utils/utils.c"
 #include "../utils/rr_reader.c"
-#include "local_server.h"
-#include "tier_server.h"
+#include "local_server.c"
+#include "tier_server.c"
 #include "server_args.h"

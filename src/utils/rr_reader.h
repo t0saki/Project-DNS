@@ -6,8 +6,10 @@
 #include "dns_message.c"
 #include "utils.c"
 
-char *read_line(FILE *file);
+char* read_line(FILE* file);
 
-dns_rr *read_rr(FILE *file);
+dns_rr* read_rr(FILE* file);
 
-dns_rr **read_rr_all(char *filename, int *countr);
+dns_rr** read_rr_all(char* filename, int* countr);
+
+int find_rr(dns_rr** records, int countr, char* name, int type);
