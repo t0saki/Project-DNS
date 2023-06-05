@@ -107,6 +107,16 @@ void pack_dns_response(const dns_question *question, const dns_rr *answer,
         int domain_len = strlen(answer->rdata);
         memcpy(response_buffer + offset, labels, domain_len + 1);
         offset += domain_len + 2;
+    } else if (answer->type == DNS_TYPE_PTR) {
+        // to label
+        uint16_t rdlength = htons(strlen(answer->rdata));
+        memcpy(response_buffer + offset, &rdlength, sizeof(rdlength));
+        offset += sizeof(rdlength);
+
+        char *labels = domain_to_labels(answer->rdata);
+        int domain_len = strlen(answer->rdata);
+        memcpy(response_buffer + offset, labels, domain_len + 1);
+        offset += domain_len + 2;
     } else {
         // to label
         uint16_t rdlength = htons(answer->rdlength);
@@ -321,6 +331,10 @@ void unpack_dns_answer(const uint8_t *buffer, int offset, int len, int ancount,
             sprintf(soa_record, "%s %s %d %d %d %d %d", mname, rname, serial,
                     refresh, retry, expire, minimum);
             strcpy(answer.rdata, soa_record);
+        } else if (answer.type == DNS_TYPE_PTR) {
+            // Parse PTR
+            char *ptr = labels_to_domain(buffer + offset, len - offset);
+            strcpy(answer.rdata, ptr);
         } else {
             // Parse unknown type
             answer.rdata = (char *)malloc(answer.rdlength + 1);

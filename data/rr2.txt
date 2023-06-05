@@ -1,2 +1,4 @@
 cn. 86400 IN NS ns3.servers.com.
 ns3.servers.com. 86400 IN A 127.4.4.1
+in-addr.arpa. 86400 IN NS ptr.servers.com.
+ptr.servers.com. 86400 IN A 127.6.6.1

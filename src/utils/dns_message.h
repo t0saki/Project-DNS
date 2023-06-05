@@ -6,7 +6,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-int DNS_PORT = 53333;
+int DNS_PORT = 53332;
 #define DNS_TYPE_A 1
 #define DNS_TYPE_CNAME 5
 #define DNS_TYPE_MX 15
@@ -14,6 +14,7 @@ int DNS_PORT = 53333;
 #define DNS_TYPE_SOA 6
 #define DNS_TYPE_TXT 16
 #define DNS_TYPE_AAAA 28
+#define DNS_TYPE_PTR 12
 
 #define DNS_MAX_MESSAGE_SIZE 512
 #define DNS_RESPONSE 33152

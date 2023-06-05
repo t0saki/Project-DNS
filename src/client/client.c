@@ -27,6 +27,8 @@ int main(int argc, char *argv[]) {
                 query_type = DNS_TYPE_MX;
             } else if (strcmp(strtrim(optarg), "cname") == 0) {
                 query_type = DNS_TYPE_CNAME;
+            } else if (strcmp(strtrim(optarg), "ptr") == 0) {
+                query_type = DNS_TYPE_PTR;
             }
             break;
         default:
@@ -39,6 +41,15 @@ int main(int argc, char *argv[]) {
     if (server_address == NULL || domain == NULL || query_type == 0) {
         fprintf(stderr, "Missing arguments.\n");
         exit(EXIT_FAILURE);
+    }
+
+    if (port < 0 || port > 65535) {
+        fprintf(stderr, "Invalid port number.\n");
+        exit(EXIT_FAILURE);
+    }
+
+    if (query_type == DNS_TYPE_PTR){
+        domain = convert2ptr(domain);
     }
 
     // Send DNS query
@@ -64,7 +75,10 @@ int main(int argc, char *argv[]) {
         printf("Mail server: %s\n", response[0].rdata);
     } else if (query_type == DNS_TYPE_CNAME) {
         printf("Canonical name: %s\n", response[0].rdata);
+    } else if (query_type == DNS_TYPE_PTR) {
+        printf("Domain name: %s\n", response[0].rdata);
     }
+    
 
     // Close the socket
     close(sockfd);

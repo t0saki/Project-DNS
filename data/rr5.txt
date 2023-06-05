@@ -1,0 +1,1 @@
+14.5.4.11.in-addr.arpa. 86400 IN PTR bupt.edu.cn.
