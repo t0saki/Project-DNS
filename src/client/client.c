@@ -58,12 +58,12 @@ int main(int argc, char *argv[]) {
 
     parse_dns_message(response_buffer, response_len, (dns_rr *)&response, &response_count, &question);
 
-    printf("IP addresses:\n");
-    char* ns_ips[128] = {0};
-    int ns_count = 0;
-    solve_answers(domain, response, response_count, ns_ips, &ns_count);
-    for (int i = 0; i < ns_count; i++) {
-        printf("%s\n", ns_ips[i]);
+    if (query_type == DNS_TYPE_A) {
+        printf("IP address: %s\n", response[0].rdata);
+    } else if (query_type == DNS_TYPE_MX) {
+        printf("Mail server: %s\n", response[0].rdata);
+    } else if (query_type == DNS_TYPE_CNAME) {
+        printf("Canonical name: %s\n", response[0].rdata);
     }
 
     // Close the socket
@@ -72,7 +72,7 @@ int main(int argc, char *argv[]) {
     // Write log
     create_log_file_client();
     char *msg = (char *)malloc(100);
-    sprintf(msg, "Sent DNS query to %s:%d, received answer: %s\n", server_address, port, ns_ips[0]);
+    sprintf(msg, "Sent DNS query to %s:%d, received answer: %s\n", server_address, port);
     write_log(msg);
 
     return 0;

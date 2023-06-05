@@ -68,11 +68,13 @@ void pack_dns_response(const dns_question *question, const dns_rr *answer,
     uint32_t ttl = htonl(answer->ttl);
     memcpy(response_buffer + offset, &ttl, sizeof(ttl));
     offset += sizeof(ttl);
-    uint16_t rdlength = htons(answer->rdlength);
-    memcpy(response_buffer + offset, &rdlength, sizeof(rdlength));
-    offset += sizeof(rdlength);
+
     // if type a, encode ip address
     if (answer->type == DNS_TYPE_A) {
+        uint16_t rdlength = htons(4);
+        memcpy(response_buffer + offset, &rdlength, sizeof(rdlength));
+        offset += sizeof(rdlength);
+
         char *ip = answer->rdata;
         char *ip1 = strtok(ip, ".");
         char *ip2 = strtok(NULL, ".");
@@ -90,8 +92,26 @@ void pack_dns_response(const dns_question *question, const dns_rr *answer,
         offset += sizeof(ip3_int);
         memcpy(response_buffer + offset, &ip4_int, sizeof(ip4_int));
         offset += sizeof(ip4_int);
+    } else if (answer->type == DNS_TYPE_MX) {
+        // to preference
+        uint16_t rdlength = htons(strlen(answer->rdata));
+        memcpy(response_buffer + offset, &rdlength, sizeof(rdlength));
+        offset += sizeof(rdlength);
+
+        // preference
+        uint16_t preference = htons(answer->preference);
+        memcpy(response_buffer + offset, &preference, sizeof(preference));
+        offset += sizeof(preference);
+
+        char *labels = domain_to_labels(answer->rdata);
+        int domain_len = strlen(answer->rdata);
+        memcpy(response_buffer + offset, labels, domain_len + 1);
+        offset += domain_len + 2;
     } else {
         // to label
+        uint16_t rdlength = htons(answer->rdlength);
+        memcpy(response_buffer + offset, &rdlength, sizeof(rdlength));
+        offset += sizeof(rdlength);
 
         char *labels = domain_to_labels(answer->rdata);
         int domain_len = strlen(answer->rdata);
@@ -253,13 +273,12 @@ void unpack_dns_answer(const uint8_t *buffer, int offset, int len, int ancount,
             strcpy(answer.rdata, cname);
         } else if (answer.type == DNS_TYPE_MX) {
             // Parse MX
-            uint16_t preference;
+            uint16_t preference = htons(10);
             memcpy(&preference, buffer + offset, sizeof(preference));
             preference = ntohs(preference);
-            char *mx = labels_to_domain(buffer + offset + 2, len - offset - 2);
-            char *mx_record;
-            sprintf(mx_record, "%d %s", preference, mx);
-            strcpy(answer.rdata, mx_record);
+            char *exchange = labels_to_domain(buffer + offset + 2,
+                                              len - offset - 2);
+            sprintf(answer.rdata, "%s", exchange);
         } else if (answer.type == DNS_TYPE_NS) {
             // Parse NS
             char *ns = labels_to_domain(buffer + offset, len - offset);

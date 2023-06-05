@@ -1,0 +1,19 @@
+2023-06-02 00:48:41 Log file created: /mnt/c/Users/wzx14/OneDrive/23H1/Network Application/Project-DNS/src/server/logs/dns_server_20230602004841.log
+2023-06-02 00:48:41 Starting root DNS server at 127.1.1.1:53335
+
+2023-06-02 00:48:41 Starting DNS server at 127.2.2.1:53335
+
+2023-06-02 00:48:41 Starting DNS server at 127.3.3.1:53335
+
+2023-06-02 00:48:41 Starting DNS server at 127.4.4.1:53335
+
+2023-06-02 00:48:41 Starting DNS server at 127.5.5.1:53335
+
+2023-06-02 00:48:41 Starting DNS server at 127.6.6.1:53335
+
+2023-06-02 00:48:41 Starting DNS server at 127.7.7.1:53335
+
+2023-06-02 00:48:41 Waiting for DNS query 0
+
+2023-06-02 00:48:41 Failed to bind to port 53335.
+

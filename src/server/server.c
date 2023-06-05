@@ -183,39 +183,108 @@ void *root_server(void *args) {
                 next_dns_server_address = answers[0].rdata;
             }
 
-            // If totally same as the query, then break
-            // answers[0].name[1] = questions.qname[0];
-            if (strcmp(question.qname, answers[0].name) == 0) {
-                printf("RData: %s\n", answers[0].rdata);
-                msg = (char *)malloc(100);
-                sprintf(msg, "Found the IP address: %s\n", answers[0].rdata);
-                write_log(msg);
+            // If totally same as the query, or get A record from A and CNAME
+            if ((strcmp(question.qname, answers[0].name) == 0)) {
+                if ((answers[0].type == DNS_TYPE_A &&
+                     question.qtype == DNS_TYPE_A) ||
+                    (answers[0].type == DNS_TYPE_A &&
+                     question.qtype == DNS_TYPE_CNAME)) {
+                    printf("RData: %s\n", answers[0].rdata);
+                    msg = (char *)malloc(100);
+                    sprintf(msg, "Found the IP address: %s\n",
+                            answers[0].rdata);
+                    write_log(msg);
 
-                // Send the DNS response to the client
-                dns_rr final_answer = {0};
-                final_answer.name = question.qname;
-                final_answer.type = question.qtype;
-                final_answer.classt = DNS_CLASS_IN;
-                final_answer.ttl = 0;
-                final_answer.rdlength = strlen(answers[0].rdata);
-                final_answer.rdata = answers[0].rdata;
+                    // Send the DNS response to the client
+                    dns_rr final_answer = {0};
+                    final_answer.name = question.qname;
+                    final_answer.type = question.qtype;
+                    final_answer.classt = DNS_CLASS_IN;
+                    final_answer.ttl = 0;
+                    final_answer.rdlength = strlen(answers[0].rdata);
+                    final_answer.rdata = answers[0].rdata;
 
-                uint8_t dns_buffer[DNS_MAX_MESSAGE_SIZE];
-                memset(dns_buffer, 0, DNS_MAX_MESSAGE_SIZE);
-                int dns_buffer_len = 0;
-                pack_dns_response(&questions, &final_answer, dns_buffer,
-                                  &dns_buffer_len);
+                    uint8_t dns_buffer[DNS_MAX_MESSAGE_SIZE];
+                    memset(dns_buffer, 0, DNS_MAX_MESSAGE_SIZE);
+                    int dns_buffer_len = 0;
+                    pack_dns_response(&questions, &final_answer, dns_buffer,
+                                      &dns_buffer_len);
 
-                if (sendto(sockfd, dns_buffer, dns_buffer_len, 0,
-                           (struct sockaddr *)&client_addr,
-                           sizeof(client_addr)) < 0) {
-                    write_log("Failed to send DNS response.\n");
-                    exit(EXIT_FAILURE);
+                    if (sendto(sockfd, dns_buffer, dns_buffer_len, 0,
+                               (struct sockaddr *)&client_addr,
+                               sizeof(client_addr)) < 0) {
+                        write_log("Failed to send DNS response.\n");
+                        exit(EXIT_FAILURE);
+                    }
+
+                    printf("Sent the DNS response to the client.\n");
+
+                    break;
+                } else if (question.qtype == DNS_TYPE_MX) {
+                    printf("RData: %s\n", answers[0].rdata);
+                    msg = (char *)malloc(100);
+                    sprintf(msg, "Found the MX record: %s\n",
+                            answers[0].rdata);
+                    write_log(msg);
+
+                    // Send the DNS response to the client
+                    dns_rr final_answer = {0};
+                    final_answer.name = question.qname;
+                    final_answer.type = question.qtype;
+                    final_answer.classt = DNS_CLASS_IN;
+                    final_answer.ttl = 0;
+                    final_answer.rdlength = strlen(answers[0].rdata);
+                    final_answer.rdata = answers[0].rdata;
+
+                    uint8_t dns_buffer[DNS_MAX_MESSAGE_SIZE];
+                    memset(dns_buffer, 0, DNS_MAX_MESSAGE_SIZE);
+                    int dns_buffer_len = 0;
+                    pack_dns_response(&question, &final_answer, dns_buffer,
+                                      &dns_buffer_len);
+
+                    if (sendto(sockfd, dns_buffer, dns_buffer_len, 0,
+                               (struct sockaddr *)&client_addr,
+                               sizeof(client_addr)) < 0) {
+                        write_log("Failed to send DNS response.\n");
+                        exit(EXIT_FAILURE);
+                    }
+
+                    printf("Sent the DNS response to the client.\n");
+
+                    break;
+                } else if (answers[0].type == DNS_TYPE_CNAME){
+                    printf("RData: %s\n", answers[0].rdata);
+                    msg = (char *)malloc(100);
+                    sprintf(msg, "Found the CNAME record: %s\n",
+                            answers[0].rdata);
+                    write_log(msg);
+
+                    // Send the DNS response to the client
+                    dns_rr final_answer = {0};
+                    final_answer.name = question.qname;
+                    final_answer.type = question.qtype;
+                    final_answer.classt = DNS_CLASS_IN;
+                    final_answer.ttl = 0;
+                    final_answer.rdlength = strlen(answers[0].rdata);
+                    final_answer.rdata = answers[0].rdata;
+
+                    uint8_t dns_buffer[DNS_MAX_MESSAGE_SIZE];
+                    memset(dns_buffer, 0, DNS_MAX_MESSAGE_SIZE);
+                    int dns_buffer_len = 0;
+                    pack_dns_response(&questions, &final_answer, dns_buffer,
+                                      &dns_buffer_len);
+
+                    if (sendto(sockfd, dns_buffer, dns_buffer_len, 0,
+                               (struct sockaddr *)&client_addr,
+                               sizeof(client_addr)) < 0) {
+                        write_log("Failed to send DNS response.\n");
+                        exit(EXIT_FAILURE);
+                    }
+
+                    printf("Sent the DNS response to the client.\n");
+
+                    break;
                 }
-
-                printf("Sent the DNS response to the client.\n");
-
-                break;
             }
 
             printf("Next iter\n");
@@ -272,6 +341,7 @@ void *tier_server(void *args) {
     }
 
     while (1) {
+        rrs = read_rr_all(rr_file, &rr_count);
         // Accept a TCP connection
         struct sockaddr_in client_addr = {0};
         socklen_t client_addr_len = sizeof(client_addr);
@@ -312,6 +382,9 @@ void *tier_server(void *args) {
             find_rr(rrs, rr_count, query_domain, question.qtype);
 
         dns_rr rr_response = {0};
+        if (rr_response_index != -1) {
+            rr_response = *rrs[rr_response_index];
+        }
 
         // If has full A record or CNAME
         if (rr_response_index == -1) {

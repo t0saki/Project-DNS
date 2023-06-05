@@ -6,7 +6,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-int DNS_PORT = 53335;
+int DNS_PORT = 53333;
 #define DNS_TYPE_A 1
 #define DNS_TYPE_CNAME 5
 #define DNS_TYPE_MX 15
@@ -57,6 +57,7 @@ typedef struct dns_rr {
     uint16_t classt;
     uint32_t ttl;
     uint16_t rdlength;
+    uint16_t preference;
     char *rdata;
 } dns_rr;
 
