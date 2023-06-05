@@ -12,7 +12,6 @@
 #include "../utils/socket.c"
 #include "../utils/utils.c"
 #include "../utils/rr_reader.c"
-
-void *root_server(void *args);
-
-void *tier_server(void *args);
+#include "local_server.h"
+#include "tier_server.h"
+#include "server_args.h"
