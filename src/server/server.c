@@ -1,7 +1,7 @@
 #include "server.h"
 
 int main(int argc, char* argv[]) {
-    char* server_address = ROOT_SERVER;
+    char* server_address = LOCAL_SERVER;
     uint16_t port = DNS_PORT;
 
     // Parse command line arguments

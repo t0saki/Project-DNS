@@ -7,6 +7,7 @@
 #include <string.h>
 
 int DNS_PORT = 53333;
+int ID = 11451;
 #define DNS_TYPE_A 1
 #define DNS_TYPE_CNAME 5
 #define DNS_TYPE_MX 15
