@@ -152,3 +152,38 @@ char* convert2ptr(char* domain) {
     sprintf(new_domain, "%d.%d.%d.%d.in-addr.arpa", ip[3], ip[2], ip[1], ip[0]);
     return new_domain;
 }
+
+int is_valid_domain(char* domain) {
+    // Check if domain is valid
+    int len = strlen(domain);
+    if (len > 255) {
+        return 0;
+    }
+    for (int i = 0; i < len; i++) {
+        if (domain[i] == '.') {
+            if (i == 0 || i == len - 1) {
+                return 0;
+            }
+            if (domain[i - 1] == '.') {
+                return 0;
+            }
+        } else if (domain[i] == '-') {
+            if (i == 0 || i == len - 1) {
+                return 0;
+            }
+            if (domain[i - 1] == '.' || domain[i + 1] == '.') {
+                return 0;
+            }
+        } else if (domain[i] == '_') {
+            if (i == 0 || i == len - 1) {
+                return 0;
+            }
+            if (domain[i - 1] == '.' || domain[i + 1] == '.') {
+                return 0;
+            }
+        } else if (domain[i] == ' ') {
+            return 0;
+        }
+    }
+    return 1;
+}

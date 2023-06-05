@@ -52,6 +52,12 @@ int main(int argc, char *argv[]) {
         domain = convert2ptr(domain);
     }
 
+    // Check domain name validity
+    if (!is_valid_domain(domain)) {
+        fprintf(stderr, "Invalid domain name.\n");
+        exit(EXIT_FAILURE);
+    }
+
     // Send DNS query
     int sockfd = udp_send(server_address, domain, port, query_type);
 
