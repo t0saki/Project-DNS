@@ -22,7 +22,7 @@ void* local_server(void* args) {
     struct sockaddr_in server_addr = { 0 };
     server_addr.sin_family = AF_INET;
     server_addr.sin_port = htons(DNS_PORT);
-    server_addr.sin_addr.s_addr = inet_addr(server_address);
+    server_addr.sin_addr.s_addr = inet_addr(LOCAL_SERVER);
 
     if (bind(sockfd, (struct sockaddr*)&server_addr, sizeof(server_addr))<
         0) {
