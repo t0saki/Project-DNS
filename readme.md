@@ -286,6 +286,13 @@ After that you can find the binaries in the `build` folder.
   2023-06-10 17:19:05 Received DNS query: google.com, sent DNS response: google.com->19.19.8.10
   2023-06-10 17:19:05 Found the IP address: 19.19.8.10
   ```
+  
+- Wireshark capture example:
+
+  Run `sudo wireshark`, choose `any`
+
+  ![image-20230610173533589](readme.assets/image-20230610173533589.png)
+
 
 ## 6. Summary and Conclusion
 
@@ -312,5 +319,5 @@ In conclusion, while the implementation of DNS packets according to the DNS stan
 
 ## Appendix
 
-Source Code:[t0saki](https://github.com/t0saki)/**[Project-DNS](https://github.com/t0saki/Project-DNS)**
+Source Code: [t0saki](https://github.com/t0saki)/**[Project-DNS](https://github.com/t0saki/Project-DNS)**
 
