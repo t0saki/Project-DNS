@@ -46,7 +46,7 @@ The project aims to develop a DNS system prototype that fulfills these requireme
 
 The preliminary design of the DNS system includes the following components: DNS Client, Local DNS Server, Top-Level Domain (TLD) DNS Servers, Root DNS Servers, and Intermediate DNS Servers. The system follows an iterative query approach to resolve domain names.
 
-![img](Project DNS.assets/how-route-53-routes-traffic.8d313c7da075c3c7303aaef32e89b5d0b7885e7c.png)
+![img](readme.assets/how-route-53-routes-traffic.8d313c7da075c3c7303aaef32e89b5d0b7885e7c.png)
 
 ### DNS Client:
 
@@ -238,31 +238,31 @@ After that you can find the binaries in the `build` folder.
 
   Run `sudo ./build/dns_server -p 53`
 
-  ![image-20230610171137603](Project DNS.assets/image-20230610171137603.png)
+  ![image-20230610171137603](readme.assets/image-20230610171137603.png)
 
 - A record:
 
   Run `./build/dns_client -s 127.1.1.1 -d bupt.edu.cn -p 53 -t a`
   
-  ![image-20230610171320733](Project DNS.assets/image-20230610171320733.png)
+  ![image-20230610171320733](readme.assets/image-20230610171320733.png)
   
 - MX record:
   
   Run `./build/dns_client -s 127.1.1.1 -d bupt.edu.cn -p 53 -t mx`
   
-  ![image-20230610171419661](Project DNS.assets/image-20230610171419661.png)
+  ![image-20230610171419661](readme.assets/image-20230610171419661.png)
   
 - CNAME record:
   
   Run `./build/dns_client -s 127.1.1.1 -d bupt.edu.cn -p 53 -t cname`
   
-  ![image-20230610171500730](Project DNS.assets/image-20230610171500730.png)
+  ![image-20230610171500730](readme.assets/image-20230610171500730.png)
   
 - PTR record:
   
   Run `./build/dns_client -s 127.1.1.1 -d 11.4.5.14 -p 53 -t ptr`
   
-  ![image-20230610171541171](Project DNS.assets/image-20230610171541171.png)
+  ![image-20230610171541171](readme.assets/image-20230610171541171.png)
   
 - Cache:
 
